@@ -1,0 +1,46 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf400
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 -- find all the rooms that needs to be cleaned today. A room needs to --\
+-- be cleaned if a customer had just checked out from today or is --\
+-- checking in today, function takes in a date which represents today --\
+\
+CREATE OR REPLACE FUNCTION TO_CLEAN(IN today_date DATE) \
+RETURNS TABLE(roomid INTEGER) AS $$\
+\
+DECLARE\
+	startd DATE;\
+	endd DATE;\
+	roomNum INT;\
+	cur CURSOR FOR SELECT start_date,end_date,room_number FROM\
+						  reservation r,belongs b WHERE r.rid=b.rid;\
+	\
+BEGIN\
+	CREATE TEMP TABLE rooms_clean(roomid INTEGER);\
+	OPEN cur;\
+	FETCH cur INTO startd,endd,roomNum;\
+	WHILE FOUND LOOP\
+		IF(today_date=startd OR today_date=endd)\
+			THEN INSERT INTO rooms_clean (roomid) VALUES(roomNum);\
+		END IF;\
+		FETCH cur INTO startd,endd,roomNum;\
+		END LOOP;\
+		CLOSE cur;\
+		\
+		RETURN QUERY SELECT * FROM rooms_clean;\
+		DROP TABLE rooms_clean;\
+		RETURN;\
+END\
+$$ LANGUAGE plpgsql;\
+\
+-- testing -- \
+SELECT TO_CLEAN('2020-03-11');\
+\
+\
+\
+\
+}
